@@ -120,3 +120,96 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+import 'package:flutter/material.dart';
+
+void main() => runApp(const TraceItApp());
+
+class TraceItApp extends StatelessWidget {
+  const TraceItApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'TraceIt',
+      debugShowCheckedModeBanner: false,
+      home: const SignInScreen(),
+      routes: {
+        '/home': (_) => const HomeScreen(),
+        '/lostItem': (_) => const LostItemScreen(),
+        '/foundItem': (_) => const FoundItemScreen(),
+        '/map': (_) => const MapScreen(),
+        '/chat': (_) => const ChatScreen(),
+        '/adminHome': (_) => const AdminHomeScreen(),
+        '/adminDashboard': (_) => const AdminDashboardScreen(),
+        '/adminSearch': (_) => const AdminSearchScreen(),
+      },
+    );
+  }
+}
+
+class SignInScreen extends StatelessWidget {
+  const SignInScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      appBar: AppBar(title: Text('Sign In')),
+      body: SizedBox.shrink(),
+    );
+  }
+}
+ class FoundItemScreen extends StatelessWidget {
+  const FoundItemScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Report Found Item'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Describe the item you found:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Item name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Location found',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Additional details',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Example: Navigate to the map or confirmation screen
+                  Navigator.pushNamed(context, '/map');
+                },
+                child: const Text('Submit Found Item'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
