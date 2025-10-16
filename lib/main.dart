@@ -35,3 +35,36 @@ class SignInScreen extends StatelessWidget {
     );
   }
 }
+
+class LostItemScreen extends StatelessWidget {
+  const LostItemScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      appBar: AppBar(title: Text('Report Lost Item')),
+      body: SizedBox.shrink(),
+    );
+  }
+}
+
+class FoundItemScreen extends StatelessWidget {
+  const FoundItemScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      appBar: AppBar(title: Text('Report Found Item')),
+      body: SizedBox.shrink(),
+    );
+  }
+}
+
+class MapScreen extends StatelessWidget {
+  const MapScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      appBar: AppBar(title: Text('Map')),
+      body: SizedBox.shrink(),
+    );
+  }
+}
