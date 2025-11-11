@@ -3,7 +3,7 @@ import 'package:traceit/main.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _validEmail = 'afton@email.com';
-const _validPass  = 'afton123';
+const _validPass = 'afton123';
 
 class _LoginScreen extends StatefulWidget {
   const _LoginScreen();
@@ -14,18 +14,18 @@ class _LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<_LoginScreen> {
   final _email = TextEditingController();
-  final _pass  = TextEditingController();
+  final _pass = TextEditingController();
 
   void _signIn() {
     final ok = _email.text.trim() == _validEmail && _pass.text == _validPass;
     if (ok) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const _HomeScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const _HomeScreen()));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
     }
   }
 

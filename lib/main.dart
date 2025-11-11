@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() => runApp(const TraceItApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  runApp(const TraceItApp());
+}
 
 class TraceItApp extends StatelessWidget {
   const TraceItApp({super.key});
@@ -21,6 +29,36 @@ class TraceItApp extends StatelessWidget {
         //'/adminDashboard': (_) => const AdminDashboardScreen(),
         //'/adminSearch': (_) => const AdminSearchScreen(),
       },
+    );
+  }
+}
+
+class FirebaseTestScreen extends StatelessWidget {
+  const FirebaseTestScreen({super.key});
+
+  Future<void> _testFirebase() async {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint(" Firebase successfully connected!");
+    } catch (e) {
+      debugPrint(" Firebase connection failed: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _testFirebase(); // Run test once when screen builds
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Firebase Test')),
+      body: const Center(
+        child: Text(
+          'If you see no errors in your console, Firebase is connected 🎉',
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
