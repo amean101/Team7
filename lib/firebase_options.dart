@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'traceit-916e7.firebasestorage.app',
     measurementId: 'G-KMGB6S6S58',
   );
+
 }
