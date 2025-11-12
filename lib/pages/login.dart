@@ -6,7 +6,7 @@ const _bg = Color.fromARGB(246, 220, 220, 221);
 const _ink = Color(0xFF27384A);
 const _accent = Color(0xFFE23D2B);
 const _card = Colors.white;
-const _logoHeight = 260.0;
+const _logoHeight = 290.0;
 
 class AuthenticationScreen extends StatefulWidget {
   const AuthenticationScreen({super.key});
@@ -88,7 +88,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                         child: Column(
                           children: [
                             Text(
-                              showRegister ? 'Register' : 'Welcome Back',
+                              showRegister ? 'Register' : 'Welcome to TraceIt',
                               style: base.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: _ink,
@@ -353,11 +353,6 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Sign in with email and password',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: _ink),
-          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _email,
@@ -845,7 +840,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     const error = Color(0xFFEF4444);
     return Scaffold(
       backgroundColor: _bg,
-      appBar: AppBar(title: const Text('Admin Login')),
+      appBar: AppBar(
+        title: const Text('Admin Sign In'),
+        backgroundColor: _bg,
+        foregroundColor: _ink,
+        elevation: 0,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -882,7 +882,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Admin Sign In',
+                              'Sign In',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
@@ -899,10 +899,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               ),
                               keyboardType: TextInputType.emailAddress,
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty)
+                                if (v == null || v.trim().isEmpty) {
                                   return 'Enter email';
-                                if (!v.contains('@'))
+                                }
+                                if (!v.contains('@')) {
                                   return 'Enter a valid email';
+                                }
                                 return null;
                               },
                             ),
@@ -915,8 +917,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               ),
                               obscureText: true,
                               validator: (v) {
-                                if (v == null || v.isEmpty)
+                                if (v == null || v.isEmpty) {
                                   return 'Enter password';
+                                }
                                 if (v.length < 6) return 'Minimum 6 characters';
                                 return null;
                               },
