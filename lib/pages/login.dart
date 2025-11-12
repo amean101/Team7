@@ -122,6 +122,18 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                     : 'Need an account? Register',
                               ),
                             ),
+                            TextButton(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AdminLoginScreen(),
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: _accent,
+                              ),
+                              child: const Text('Admin login'),
+                            ),
                           ],
                         ),
                       ),
@@ -182,6 +194,7 @@ class _RegisterEmailSectionState extends State<RegisterEmailSection> {
           'email': _email.text.trim(),
           'photoURL': cred.user?.photoURL,
           'createdAt': FieldValue.serverTimestamp(),
+          'role': 'user',
         }, SetOptions(merge: true));
       }
       widget.onSuccess();
@@ -273,7 +286,7 @@ class _RegisterEmailSectionState extends State<RegisterEmailSection> {
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color.fromARGB(246, 220, 220, 221),
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Create account'),
@@ -417,12 +430,22 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   DocumentSnapshot<Map<String, dynamic>>? _userDoc;
   bool _loading = true;
+  bool _editing = false;
   String? _msg;
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -432,12 +455,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .collection('users')
           .doc(u.uid)
           .get();
+      _userDoc = doc;
+      final name = u.displayName ?? doc.data()?['name'] ?? '';
+      final phone = doc.data()?['phone'] ?? '';
+      _nameCtrl.text = name;
+      _phoneCtrl.text = phone.toString();
+    }
+    setState(() => _loading = false);
+  }
+
+  Future<void> _saveProfile() async {
+    final u = FirebaseAuth.instance.currentUser;
+    if (u == null) return;
+    final name = _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    try {
+      await u.updateDisplayName(name);
+      await FirebaseFirestore.instance.collection('users').doc(u.uid).set({
+        'name': name,
+        'phone': phone,
+      }, SetOptions(merge: true));
       setState(() {
-        _userDoc = doc;
-        _loading = false;
+        _editing = false;
+        _msg = 'Profile updated';
       });
-    } else {
-      setState(() => _loading = false);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _msg = e.message ?? e.code);
+    } catch (e) {
+      setState(() => _msg = e.toString());
     }
   }
 
@@ -583,6 +628,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         foregroundColor: _ink,
         title: const Text('Profile'),
         actions: [
+          IconButton(
+            onPressed: () => setState(() => _editing = !_editing),
+            icon: Icon(_editing ? Icons.close : Icons.edit, color: _ink),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: OutlinedButton(
@@ -629,58 +678,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            'Name',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            name,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Email',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            email,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Phone',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            phone.toString(),
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleMedium?.copyWith(color: _ink),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: _showChangePasswordDialog,
-                              style: TextButton.styleFrom(
-                                foregroundColor: _accent,
+                          if (_editing) ...[
+                            TextField(
+                              controller: _nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: Icon(Icons.person_outline),
                               ),
-                              child: const Text('Change password'),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _phoneCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number',
+                                prefixIcon: Icon(Icons.phone_outlined),
+                              ),
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 44,
+                              child: FilledButton(
+                                onPressed: _saveProfile,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _accent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Save'),
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              'Name',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              name,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Email',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              email,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Phone',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              phone.toString(),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleMedium?.copyWith(color: _ink),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: _showChangePasswordDialog,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: _accent,
+                                ),
+                                child: const Text('Change password'),
+                              ),
+                            ),
+                          ],
                           if (_msg != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
@@ -694,6 +777,225 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
+  @override
+  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+}
+
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
+  final _form = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  String? _msg;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _adminSignIn() async {
+    if (!_form.currentState!.validate()) return;
+    setState(() {
+      _msg = null;
+      _busy = true;
+    });
+    try {
+      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+      final uid = cred.user?.uid;
+      if (uid == null) throw Exception('No user');
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final role = doc.data()?['role'];
+      if (role == 'admin') {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
+        );
+      } else {
+        await FirebaseAuth.instance.signOut();
+        setState(() => _msg = 'Not an admin account');
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _msg = e.message ?? e.code);
+    } catch (e) {
+      setState(() => _msg = e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const error = Color(0xFFEF4444);
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(title: const Text('Admin Login')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              SizedBox(
+                height: _logoHeight,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/traceit_logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  child: Card(
+                    color: _card,
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Admin Sign In',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: _ink,
+                                  ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _email,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: Icon(Icons.alternate_email),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty)
+                                  return 'Enter email';
+                                if (!v.contains('@'))
+                                  return 'Enter a valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _password,
+                              decoration: const InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: Icon(Icons.lock_outline),
+                              ),
+                              obscureText: true,
+                              validator: (v) {
+                                if (v == null || v.isEmpty)
+                                  return 'Enter password';
+                                if (v.length < 6) return 'Minimum 6 characters';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _busy ? null : _adminSignIn,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _accent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: _busy
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text('Sign In'),
+                              ),
+                            ),
+                            if (_msg != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  _msg!,
+                                  style: const TextStyle(color: error),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AdminHomeScreen extends StatelessWidget {
+  const AdminHomeScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(title: const Text('Admin')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Admin dashboard',
+              style: TextStyle(fontSize: 20, color: _ink),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _accent,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Sign out'),
+            ),
+          ],
         ),
       ),
     );
