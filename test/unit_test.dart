@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+<<<<<<< HEAD
 import 'package:traceit/main.dart';
+=======
+>>>>>>> origin/afton
 import 'package:flutter/material.dart';
 
 class MyTestWidget extends StatelessWidget {
@@ -29,4 +32,8 @@ void main() {
 
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/afton
