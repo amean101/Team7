@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login.dart';
+import 'pages/chat.dart';
 
 const kPrimary = Color(0xFF3B82F6);
 const kSecondary = Color(0xFF10B981);
@@ -103,6 +104,7 @@ class TraceItApp extends StatelessWidget {
         '/lostItem': (_) => const LostItemScreen(),
         '/foundItem': (_) => const FoundItemScreen(),
         '/map': (_) => const MapScreen(),
+        '/chat': (_) => const ChatScreen(),
       },
     );
   }
@@ -210,7 +212,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 _FooterIconButton(
                   icon: Icons.chat_bubble_outline,
-                  onPressed: () {},
+                  onPressed: () => Navigator.pushNamed(context, '/chat'),
                 ),
               ],
             ),
