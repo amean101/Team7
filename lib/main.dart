@@ -4,6 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login.dart';
 import 'pages/chat.dart';
+import 'pages/lost_item.dart';
+import 'pages/found_item.dart';
+import 'pages/map.dart';
+import 'pages/home.dart';
 
 const kPrimary = Color(0xFF3B82F6);
 const kSecondary = Color(0xFF10B981);
@@ -130,113 +134,4 @@ class _AuthGate extends StatelessWidget {
       },
     );
   }
-}
-
-class _FooterIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-  final bool isSelected;
-
-  const _FooterIconButton({
-    required this.icon,
-    required this.onPressed,
-    this.isSelected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(icon),
-          iconSize: 28,
-          color: Colors.black,
-          onPressed: onPressed,
-        ),
-        if (isSelected)
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            width: 40,
-            height: 3,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/profile'),
-            icon: const Icon(Icons.person_outline),
-          ),
-        ],
-      ),
-      body: const Center(child: SizedBox.shrink()),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0xFFDDDDDD),
-              blurRadius: 8,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _FooterIconButton(
-                  icon: Icons.explore_outlined,
-                  onPressed: () => Navigator.pushNamed(context, '/map'),
-                ),
-                _FooterIconButton(
-                  icon: Icons.home,
-                  isSelected: true,
-                  onPressed: () {},
-                ),
-                _FooterIconButton(
-                  icon: Icons.chat_bubble_outline,
-                  onPressed: () => Navigator.pushNamed(context, '/chat'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class LostItemScreen extends StatelessWidget {
-  const LostItemScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: SizedBox.shrink());
-}
-
-class FoundItemScreen extends StatelessWidget {
-  const FoundItemScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: SizedBox.shrink());
-}
-
-class MapScreen extends StatelessWidget {
-  const MapScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: SizedBox.shrink());
 }
