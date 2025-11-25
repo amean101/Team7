@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/* import 'package:flutter/material.dart';
 
 class LostItemScreen extends StatefulWidget {
   const LostItemScreen({super.key});
@@ -7,11 +7,11 @@ class LostItemScreen extends StatefulWidget {
   State<LostItemScreen> createState() => _LostItemScreenState();
 }
 
-class _LostItemScreenState extends State<LostItemScreen> {
+// class _LostItemScreenState extends State<LostItemScreen> {
   String _description = '';
   String _contactName = '';
   String _contactEmail = '';
-  String _contactPhone = '';
+  String _contactPhone = ''; 
 
   // Sample lost items data
   final List<Map<String, dynamic>> _lostItems = [
@@ -419,11 +419,7 @@ class _FooterIconButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isSelected;
 
-  const _FooterIconButton({
-    required this.icon,
-    required this.onPressed,
-    this.isSelected = false,
-  });
+  const _FooterIconButton({required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -449,4 +445,4 @@ class _FooterIconButton extends StatelessWidget {
       ],
     );
   }
-}
+}*/

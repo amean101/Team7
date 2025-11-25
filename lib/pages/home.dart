@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+const _bg = Color.fromARGB(246, 220, 220, 221);
+const _logoHeight = 300.0;
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8E8E8),
+      backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE8E8E8),
+        backgroundColor: _bg,
         elevation: 0,
         title: const SizedBox.shrink(),
         actions: [
@@ -21,136 +24,109 @@ class HomeScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo Icon
-                  const Icon(
-                    Icons.explore_outlined,
-                    size: 100,
-                    color: Color(0xFF2C5F6F),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // App Title
-                  const Text(
-                    'TraceIt',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C5F6F),
-                      letterSpacing: 1,
-                    ),
-                  ),
-
-                  // Red underline
-                  Container(
-                    width: 220,
-                    height: 3,
-                    margin: const EdgeInsets.only(top: 4),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.red.shade400,
-                          width: 3,
-                        ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: _logoHeight,
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/traceit_logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 40),
 
-                  // Subtitle
-                  const Text(
-                    'digital lost & found',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Color(0xFF5A5A5A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  // Description text
-                  Text(
-                    'Upload found items and report lost items quickly and easily with TraceIt! Chat with event staff, navigate to the lost and found, and get your items back quicker than ever.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade600,
-                      height: 1.6,
-                    ),
-                  ),
-
-                  const SizedBox(height: 70),
-
-                  // Buttons Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Found Item Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/foundItem');
-                          },
-                          icon: const Icon(Icons.add_circle_outline, size: 22),
-                          label: const Text(
-                            'Found Item',
-                            style: TextStyle(fontSize: 15),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.red.shade400,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 18,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            elevation: 3,
+                        Text(
+                          'Upload found items and report lost items quickly and easily with TraceIt! Chat with event staff, navigate to the lost and found, and get your items back quicker than ever.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey.shade600,
+                            height: 1.6,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 50),
 
-                      const SizedBox(width: 16),
-
-                      // Lost Item Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/lostItem');
-                          },
-                          icon: const Icon(Icons.search, size: 22),
-                          label: const Text(
-                            'Lost Item',
-                            style: TextStyle(fontSize: 15),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.red.shade400,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 18,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            elevation: 3,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 100.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => Navigator.pushNamed(
+                                    context,
+                                    '/foundItem',
+                                  ),
+                                  icon: const Icon(
+                                    Icons.add_circle_outline,
+                                    size: 22,
+                                  ),
+                                  label: const Text(
+                                    'Found Item',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.red.shade400,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 18,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () =>
+                                      Navigator.pushNamed(context, '/lostItem'),
+                                  icon: const Icon(Icons.search, size: 22),
+                                  label: const Text(
+                                    'Lost Item',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.red.shade400,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 18,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 3,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -183,7 +159,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 _FooterIconButton(
                   icon: Icons.chat_bubble_outline,
-                  onPressed: () {},
+                  onPressed: () => Navigator.pushNamed(context, '/chat'),
                 ),
               ],
             ),
