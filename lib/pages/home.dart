@@ -183,7 +183,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 _FooterIconButton(
                   icon: Icons.chat_bubble_outline,
-                  onPressed: () {},
+                  onPressed: () => Navigator.pushNamed(context, '/chat'),
                 ),
               ],
             ),
