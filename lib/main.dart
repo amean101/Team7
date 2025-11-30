@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login.dart';
 import 'pages/chat.dart';
-// import 'pages/lost_item.dart';
+import 'pages/lost_item.dart';
 import 'pages/found_item.dart';
 import 'pages/map.dart';
 import 'pages/home.dart';
@@ -108,7 +108,7 @@ class TraceItApp extends StatelessWidget {
         '/home': (_) => const HomeScreen(),
         '/auth': (_) => const AuthenticationScreen(),
         '/profile': (_) => const ProfileScreen(),
-        //'/lostItem': (_) => const LostItemScreen(),
+        '/lostItem': (_) => const LostItemScreen(),
         '/foundItem': (_) => const FoundItemScreen(),
         '/map': (_) => const MapScreen(),
         '/chat': (_) => const ChatScreen(),

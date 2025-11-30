@@ -15,14 +15,24 @@ class _LostItemScreenState extends State<LostItemScreen> {
   final _imagePicker = ImagePicker();
   final _firestoreService = FirestoreService.instance;
 
-  // Form fields
+  String _title = '';
   String _description = '';
   String _contactName = '';
   String _contactEmail = '';
   String _contactPhone = '';
+  String _selectedCategory = '';
   File? _imageFile;
 
-  // Lost items from Firestore
+  final List<String> _categories = [
+    'Electronics',
+    'Clothing',
+    'Accessories',
+    'Keys',
+    'Wallet',
+    'Bag',
+    'Other',
+  ];
+
   List<Map<String, dynamic>> _lostItems = [];
   bool _isUploading = false;
 
@@ -64,7 +74,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Helper text
                         if (_lostItems.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -95,31 +104,50 @@ class _LostItemScreenState extends State<LostItemScreen> {
                             ),
                           ),
 
-                        // Description Section
+                        _buildSectionTile(
+                          label: 'Title',
+                          value: _title.isEmpty
+                              ? 'Short name for your item (e.g. "Black iPhone 13")'
+                              : _title,
+                          onTap: _showTitleDialog,
+                          hasValue: _title.isNotEmpty,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildSectionTile(
+                          label: 'Category',
+                          value: _selectedCategory.isEmpty
+                              ? 'Select a category'
+                              : _selectedCategory,
+                          onTap: _showCategoryDialog,
+                          hasValue: _selectedCategory.isNotEmpty,
+                        ),
+
+                        const SizedBox(height: 12),
+
                         _buildSectionTile(
                           label: 'Description',
                           value: _description.isEmpty
                               ? 'Add a description of your item'
                               : _description,
-                          onTap: () => _showDescriptionDialog(),
+                          onTap: _showDescriptionDialog,
                           hasValue: _description.isNotEmpty,
                         ),
 
                         const SizedBox(height: 12),
 
-                        // Contact Section
                         _buildSectionTile(
                           label: 'Contact',
                           value: _contactName.isEmpty
                               ? 'Name\nEmail | Phone'
                               : '$_contactName\n$_contactEmail${_contactPhone.isNotEmpty ? " | $_contactPhone" : ""}',
-                          onTap: () => _showContactDialog(),
+                          onTap: _showContactDialog,
                           hasValue: _contactName.isNotEmpty,
                         ),
 
                         const SizedBox(height: 12),
 
-                        // Image Upload Section
                         _buildSectionTile(
                           label: 'Image (optional)',
                           value: _imageFile == null
@@ -127,7 +155,7 @@ class _LostItemScreenState extends State<LostItemScreen> {
                               : _imageFile!.path == 'test_image_marker'
                               ? 'Test image selected ✓'
                               : 'Image selected ✓',
-                          onTap: () => _showImageOptions(),
+                          onTap: _showImageOptions,
                           hasValue: _imageFile != null,
                           trailing: _imageFile != null
                               ? _imageFile!.path == 'test_image_marker'
@@ -161,7 +189,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
 
                         const Divider(thickness: 2, height: 32),
 
-                        // Lost Items Header
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
@@ -196,7 +223,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
                           ),
                         ),
 
-                        // Items Table Header
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -245,7 +271,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Lost Items List
                         if (snapshot.connectionState ==
                                 ConnectionState.waiting &&
                             _lostItems.isEmpty)
@@ -295,7 +320,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
 
                         const SizedBox(height: 24),
 
-                        // Upload Lost Item Button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -388,7 +412,10 @@ class _LostItemScreenState extends State<LostItemScreen> {
   }
 
   Future<void> _uploadLostItem() async {
-    // Validation
+    if (_title.trim().isEmpty) {
+      _showError('Please add a title');
+      return;
+    }
     if (_description.trim().isEmpty) {
       _showError('Please add a description');
       return;
@@ -408,27 +435,25 @@ class _LostItemScreenState extends State<LostItemScreen> {
         return;
       }
 
-      // Create title from first 3 words
-      final title = _description.split(' ').take(3).join(' ');
-
-      // Upload to Firestore
       await _firestoreService.createLostItem(
         userId: currentUser.uid,
-        title: title,
+        title: _title.trim(),
         description: _description,
         contactName: _contactName,
         contactEmail: _contactEmail,
         contactPhone: _contactPhone,
+        category: _selectedCategory.isEmpty ? null : _selectedCategory,
         imageFile: _imageFile,
       );
 
-      // Clear form
       if (mounted) {
         setState(() {
+          _title = '';
           _description = '';
           _contactName = '';
           _contactEmail = '';
           _contactPhone = '';
+          _selectedCategory = '';
           _imageFile = null;
           _isUploading = false;
         });
@@ -609,7 +634,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Item Image
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: item['imageUrl'] != null && item['imageUrl'].isNotEmpty
@@ -648,10 +672,7 @@ class _LostItemScreenState extends State<LostItemScreen> {
                     ),
                   ),
           ),
-
           const SizedBox(width: 12),
-
-          // Item Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,8 +701,6 @@ class _LostItemScreenState extends State<LostItemScreen> {
               ],
             ),
           ),
-
-          // Status and Actions
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -732,6 +751,81 @@ class _LostItemScreenState extends State<LostItemScreen> {
       default:
         return Colors.grey;
     }
+  }
+
+  void _showTitleDialog() {
+    final controller = TextEditingController(text: _title);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Item Title'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Short name for your item',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() => _title = controller.text);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategoryDialog() {
+    String temp = _selectedCategory.isEmpty
+        ? (_categories.isNotEmpty ? _categories.first : '')
+        : _selectedCategory;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Category'),
+        content: StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return DropdownButton<String>(
+              value: temp.isEmpty ? null : temp,
+              isExpanded: true,
+              hint: const Text('Select a category'),
+              items: _categories
+                  .map(
+                    (c) => DropdownMenuItem<String>(value: c, child: Text(c)),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                setStateDialog(() => temp = value);
+              },
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() => _selectedCategory = temp);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDescriptionDialog() {
@@ -950,7 +1044,11 @@ class _FooterIconButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isSelected;
 
-  const _FooterIconButton({required this.icon, required this.onPressed});
+  const _FooterIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -976,4 +1074,4 @@ class _FooterIconButton extends StatelessWidget {
       ],
     );
   }
-}*/
+}
