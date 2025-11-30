@@ -10,6 +10,7 @@ import 'pages/map.dart';
 import 'pages/home.dart';
 import 'admin/admin_home.dart';
 import 'admin/admin_search.dart';
+import 'admin/admin_analytics.dart';
 
 const kPrimary = Color(0xFF3B82F6);
 const kSecondary = Color(0xFF10B981);
@@ -113,7 +114,7 @@ class TraceItApp extends StatelessWidget {
         '/chat': (_) => const ChatScreen(),
         '/adminHome': (_) => const AdminHomeScreen(),
         '/adminSearch': (_) => const AdminSearchScreen(),
-        //'/adminAnalytics': (_) => const AdminAnalyticsScreen(),
+        '/adminAnalytics': (context) => const AdminAnalyticsScreen(),
       },
     );
   }

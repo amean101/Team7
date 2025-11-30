@@ -13,8 +13,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   final TextEditingController _searchController = TextEditingController();
   final _firestoreService = FirestoreService.instance;
 
-  List<Map<String, dynamic>> _allItems = [];
-  List<Map<String, dynamic>> _filteredItems = [];
   String _selectedCategory = 'All';
 
   final List<String> _categories = [
@@ -31,7 +29,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_filterItems);
   }
 
   @override
@@ -40,33 +37,10 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
     super.dispose();
   }
 
-  void _filterItems() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredItems = _allItems.where((item) {
-        final matchesSearch =
-            query.isEmpty ||
-            (item['title'] ?? '').toLowerCase().contains(query) ||
-            (item['description'] ?? '').toLowerCase().contains(query);
-
-        final matchesCategory =
-            _selectedCategory == 'All' ||
-            (item['category'] ?? '').toLowerCase() ==
-                _selectedCategory.toLowerCase() ||
-            (item['title'] ?? '').toLowerCase().contains(
-              _selectedCategory.toLowerCase(),
-            );
-
-        return matchesSearch && matchesCategory;
-      }).toList();
-    });
-  }
-
   void _selectCategory(String category) {
     setState(() {
       _selectedCategory = category;
     });
-    _filterItems();
   }
 
   void _showItemDetails(Map<String, dynamic> item) {
@@ -114,7 +88,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
         );
 
         if (mounted) {
-          Navigator.pop(context); // Close bottom sheet
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -136,6 +110,27 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     }
+  }
+
+  List<Map<String, dynamic>> _applyFilters(List<Map<String, dynamic>> items) {
+    final query = _searchController.text.toLowerCase();
+    final selected = _selectedCategory.toLowerCase();
+
+    return items.where((item) {
+      final title = (item['title'] ?? '').toString().toLowerCase();
+      final description = (item['description'] ?? '').toString().toLowerCase();
+      final category = (item['category'] ?? '').toString().toLowerCase();
+
+      final matchesSearch =
+          query.isEmpty || title.contains(query) || description.contains(query);
+
+      final matchesCategory =
+          _selectedCategory == 'All' ||
+          category == selected ||
+          title.contains(selected);
+
+      return matchesSearch && matchesCategory;
+    }).toList();
   }
 
   @override
@@ -162,19 +157,12 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _firestoreService.getLostItemsStream(),
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            _allItems = snapshot.data!;
-            if (_filteredItems.isEmpty && _searchController.text.isEmpty) {
-              _filteredItems = _allItems;
-            } else {
-              _filterItems();
-            }
-          }
+          final items = snapshot.data ?? [];
+          final filteredItems = _applyFilters(items);
 
           return Column(
             children: [
-              // Info Banner
-              if (_allItems.isNotEmpty)
+              if (items.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   padding: const EdgeInsets.all(12),
@@ -205,7 +193,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Database: ${_allItems.length} Lost Items',
+                              'Database: ${items.length} Lost Items',
                               style: TextStyle(
                                 color: Colors.blue.shade900,
                                 fontWeight: FontWeight.w600,
@@ -227,30 +215,33 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                   ),
                 ),
 
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Color.fromARGB(13, 0, 0, 0),
                         blurRadius: 10,
-                        offset: const Offset(0, 2),
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
                   child: TextField(
                     controller: _searchController,
+                    onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       hintText: 'Search for your lost item...',
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, color: Colors.grey),
-                              onPressed: () => _searchController.clear(),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
                             )
                           : null,
                       border: InputBorder.none,
@@ -263,7 +254,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                 ),
               ),
 
-              // Category Filter
               SizedBox(
                 height: 50,
                 child: ListView.builder(
@@ -296,14 +286,13 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
 
               const SizedBox(height: 16),
 
-              // Items Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Lost Items (${_filteredItems.length})',
+                      'Lost Items (${filteredItems.length})',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -315,11 +304,10 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
 
               const SizedBox(height: 12),
 
-              // Items List
               Expanded(
                 child: snapshot.connectionState == ConnectionState.waiting
                     ? const Center(child: CircularProgressIndicator())
-                    : _filteredItems.isEmpty
+                    : filteredItems.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -358,7 +346,9 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                               TextButton.icon(
                                 onPressed: () {
                                   _searchController.clear();
-                                  _selectCategory('All');
+                                  setState(() {
+                                    _selectedCategory = 'All';
+                                  });
                                 },
                                 icon: const Icon(Icons.clear),
                                 label: const Text('Clear Search & Filters'),
@@ -368,14 +358,12 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                         ),
                       )
                     : RefreshIndicator(
-                        onRefresh: () async {
-                          // Stream will auto-refresh
-                        },
+                        onRefresh: () async {},
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _filteredItems.length,
+                          itemCount: filteredItems.length,
                           itemBuilder: (context, index) {
-                            return _buildItemCard(_filteredItems[index]);
+                            return _buildItemCard(filteredItems[index]);
                           },
                         ),
                       ),
@@ -430,18 +418,17 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Color.fromARGB(13, 0, 0, 0),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Item Image
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: item['imageUrl'] != null && item['imageUrl'].isNotEmpty
@@ -456,10 +443,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                     )
                   : _buildPlaceholderImage(),
             ),
-
             const SizedBox(width: 12),
-
-            // Item Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,7 +509,6 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
                 ],
               ),
             ),
-
             Icon(Icons.chevron_right, color: Colors.grey.shade400),
           ],
         ),
@@ -565,7 +548,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
       } else {
         return '${date.month}/${date.day}/${date.year}';
       }
-    } catch (e) {
+    } catch (_) {
       return 'Unknown';
     }
   }
@@ -591,7 +574,6 @@ class _ItemDetailsSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Drag Handle
               Container(
                 margin: const EdgeInsets.only(top: 8),
                 width: 40,
@@ -601,13 +583,11 @@ class _ItemDetailsSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(24),
                   children: [
-                    // Item Image
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child:
@@ -624,10 +604,7 @@ class _ItemDetailsSheet extends StatelessWidget {
                             )
                           : _buildLargePlaceholder(),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Title
                     Text(
                       item['title'] ?? 'Untitled',
                       style: const TextStyle(
@@ -635,10 +612,7 @@ class _ItemDetailsSheet extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
-                    // Status Badge
                     Row(
                       children: [
                         Container(
@@ -661,10 +635,7 @@ class _ItemDetailsSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Description
                     const Text(
                       'Description',
                       style: TextStyle(
@@ -681,33 +652,24 @@ class _ItemDetailsSheet extends StatelessWidget {
                         height: 1.5,
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Contact Info
                     _buildInfoRow(
                       Icons.person,
                       'Contact',
                       item['contactName'] ?? 'Unknown',
                     ),
-
                     const SizedBox(height: 12),
-
                     _buildInfoRow(
                       Icons.email,
                       'Email',
                       item['contactEmail'] ?? 'No email',
                     ),
-
                     if (item['contactPhone'] != null &&
                         item['contactPhone'].isNotEmpty) ...[
                       const SizedBox(height: 12),
                       _buildInfoRow(Icons.phone, 'Phone', item['contactPhone']),
                     ],
-
                     const SizedBox(height: 32),
-
-                    // Claim Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

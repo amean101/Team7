@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../data/firestore_service.dart';
 
 const _bg = Color.fromARGB(246, 220, 220, 221);
 
@@ -12,11 +12,36 @@ class AdminSearchScreen extends StatefulWidget {
 
 class _AdminSearchScreenState extends State<AdminSearchScreen> {
   final _searchCtrl = TextEditingController();
+  final _firestoreService = FirestoreService.instance;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateStatus(String itemId, String newStatus) async {
+    try {
+      await _firestoreService.updateItemStatus(
+        itemId: itemId,
+        status: newStatus,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status updated to ${newStatus.toUpperCase()}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update status: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -48,7 +73,7 @@ class _AdminSearchScreenState extends State<AdminSearchScreen> {
               child: TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
-                  hintText: 'Search by item, description, owner, or tags',
+                  hintText: 'Search by item, description, owner, or category',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: Colors.white,
@@ -65,45 +90,50 @@ class _AdminSearchScreenState extends State<AdminSearchScreen> {
               ),
             ),
             Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: FirebaseFirestore.instance
-                    .collection('items')
-                    .snapshots(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                // SAME stream as FoundItemScreen
+                stream: _firestoreService.getLostItemsStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
+
                   if (snapshot.hasError) {
+                    // Show the real error to debug rules / path issues
                     return Center(
-                      child: Text(
-                        'Error loading items',
-                        style: TextStyle(color: Colors.red.shade400),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'Error loading items:\n${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red.shade400),
+                        ),
                       ),
                     );
                   }
-                  final docs = snapshot.data?.docs ?? [];
+
+                  final allItems = snapshot.data ?? [];
                   final q = _searchCtrl.text.trim().toLowerCase();
 
                   final filtered = q.isEmpty
-                      ? docs
-                      : docs.where((d) {
-                          final data = d.data();
+                      ? allItems
+                      : allItems.where((data) {
                           final title = (data['title'] ?? '')
                               .toString()
                               .toLowerCase();
                           final desc = (data['description'] ?? '')
                               .toString()
                               .toLowerCase();
-                          final owner = (data['ownerName'] ?? '')
+                          final owner = (data['contactName'] ?? '')
                               .toString()
                               .toLowerCase();
-                          final tags = (data['tags'] ?? '')
+                          final category = (data['category'] ?? '')
                               .toString()
                               .toLowerCase();
                           return title.contains(q) ||
                               desc.contains(q) ||
                               owner.contains(q) ||
-                              tags.contains(q);
+                              category.contains(q);
                         }).toList();
 
                   if (filtered.isEmpty) {
@@ -120,14 +150,18 @@ class _AdminSearchScreenState extends State<AdminSearchScreen> {
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final doc = filtered[index];
-                      final data = doc.data();
+                      final data = filtered[index];
+
+                      // FirestoreService should be adding this when it builds the map
+                      final id = (data['id'] ?? '').toString();
                       final title = (data['title'] ?? 'Unnamed item')
                           .toString();
                       final desc = (data['description'] ?? '').toString();
-                      final status = (data['status'] ?? '').toString();
-                      final owner = (data['ownerName'] ?? '').toString();
-                      final tags = (data['tags'] ?? '').toString();
+                      final status = (data['status'] ?? 'lost')
+                          .toString()
+                          .toLowerCase();
+                      final owner = (data['contactName'] ?? '').toString();
+                      final category = (data['category'] ?? '').toString();
                       final imageUrl = (data['imageUrl'] ?? '').toString();
 
                       return _ItemCard(
@@ -135,8 +169,14 @@ class _AdminSearchScreenState extends State<AdminSearchScreen> {
                         description: desc,
                         status: status,
                         owner: owner,
-                        tags: tags,
+                        tags: category,
                         imageUrl: imageUrl.isEmpty ? null : imageUrl,
+                        onReturn: id.isEmpty
+                            ? null
+                            : () => _updateStatus(id, 'returned'),
+                        onArchive: id.isEmpty
+                            ? null
+                            : () => _updateStatus(id, 'archived'),
                       );
                     },
                   );
@@ -157,6 +197,8 @@ class _ItemCard extends StatelessWidget {
   final String owner;
   final String tags;
   final String? imageUrl;
+  final VoidCallback? onReturn;
+  final VoidCallback? onArchive;
 
   const _ItemCard({
     required this.title,
@@ -165,6 +207,8 @@ class _ItemCard extends StatelessWidget {
     required this.owner,
     required this.tags,
     this.imageUrl,
+    this.onReturn,
+    this.onArchive,
   });
 
   Color _statusColor() {
@@ -172,11 +216,16 @@ class _ItemCard extends StatelessWidget {
     if (s == 'returned') return const Color(0xFF22C55E);
     if (s == 'archived') return Colors.grey.shade600;
     if (s == 'found') return const Color(0xFF2563EB);
+    if (s == 'claimed') return const Color(0xFF16A34A);
+    if (s == 'lost') return const Color(0xFFDC2626);
     return Colors.black;
   }
 
   @override
   Widget build(BuildContext context) {
+    final canReturn = onReturn != null;
+    final canArchive = onArchive != null;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -240,24 +289,14 @@ class _ItemCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Return action tapped')),
-                        );
-                      },
+                      onPressed: canReturn ? onReturn : null,
                       child: const Text(
                         'Return',
                         style: TextStyle(fontSize: 12),
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Archive action tapped'),
-                          ),
-                        );
-                      },
+                      onPressed: canArchive ? onArchive : null,
                       child: const Text(
                         'Archive',
                         style: TextStyle(fontSize: 12),

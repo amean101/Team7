@@ -9,11 +9,9 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Collection references
-  CollectionReference get _lostItemsCollection =>
-      _firestore.collection('lost_items');
+  // Single shared collection for all lost/found items
+  CollectionReference get _itemsCollection => _firestore.collection('items');
 
-  // Create a lost item
   Future<String> createLostItem({
     required String userId,
     required String title,
@@ -28,23 +26,21 @@ class FirestoreService {
       final now = DateTime.now();
       String? imageUrl;
 
-      // Upload image to Firebase Storage if provided
       if (imageFile != null && imageFile.path != 'test_image_marker') {
         final fileName = '${userId}_${now.millisecondsSinceEpoch}.jpg';
-        final storageRef = _storage.ref().child('lost_items/$fileName');
+        final storageRef = _storage.ref().child('items/$fileName');
         await storageRef.putFile(imageFile);
         imageUrl = await storageRef.getDownloadURL();
       }
 
-      // Create document
-      final docRef = await _lostItemsCollection.add({
+      final docRef = await _itemsCollection.add({
         'userId': userId,
         'title': title,
         'description': description,
         'contactName': contactName,
         'contactEmail': contactEmail,
         'contactPhone': contactPhone ?? '',
-        'category': category,
+        'category': category ?? '',
         'imageUrl': imageUrl,
         'status': 'lost',
         'createdAt': FieldValue.serverTimestamp(),
@@ -54,49 +50,62 @@ class FirestoreService {
 
       return docRef.id;
     } catch (e) {
+      // This is what your "Failed to upload" is catching
       throw Exception('Failed to create lost item: $e');
     }
   }
 
-  // Get all lost items (for search page)
+  // All lost items (for FoundItemScreen, admin, etc.)
   Stream<List<Map<String, dynamic>>> getLostItemsStream() {
-    return _lostItemsCollection
-        .where('status', isEqualTo: 'lost')
+    return _itemsCollection
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
+          final items = snapshot.docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
             data['id'] = doc.id;
             return data;
           }).toList();
+
+          return items.where((item) {
+            final status = (item['status'] ?? 'lost').toString().toLowerCase();
+            return status == 'lost';
+          }).toList();
         });
   }
 
-  // Get user's lost items
+  // Current user's lost items (for LostItemScreen)
   Stream<List<Map<String, dynamic>>> getUserLostItemsStream(String userId) {
-    return _lostItemsCollection
-        .where('userId', isEqualTo: userId)
-        .where('status', isEqualTo: 'lost')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            data['id'] = doc.id;
-            return data;
-          }).toList();
-        });
+    return _itemsCollection.where('userId', isEqualTo: userId).snapshots().map((
+      snapshot,
+    ) {
+      final items = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+
+      items.sort((a, b) {
+        final ta = a['createdAt'];
+        final tb = b['createdAt'];
+        if (ta == null || tb == null) return 0;
+        return (tb as Timestamp).compareTo(ta as Timestamp);
+      });
+
+      return items.where((item) {
+        final status = (item['status'] ?? 'lost').toString().toLowerCase();
+        return status == 'lost';
+      }).toList();
+    });
   }
 
-  // Update item status
   Future<void> updateItemStatus({
     required String itemId,
     required String status,
     String? claimedBy,
   }) async {
     try {
-      await _lostItemsCollection.doc(itemId).update({
+      await _itemsCollection.doc(itemId).update({
         'status': status,
         'claimedBy': claimedBy,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -106,10 +115,8 @@ class FirestoreService {
     }
   }
 
-  // Delete item
   Future<void> deleteItem(String itemId, String? imageUrl) async {
     try {
-      // Delete image from storage if exists
       if (imageUrl != null && imageUrl.isNotEmpty) {
         try {
           final ref = _storage.refFromURL(imageUrl);
@@ -119,18 +126,16 @@ class FirestoreService {
         }
       }
 
-      // Delete document
-      await _lostItemsCollection.doc(itemId).delete();
+      await _itemsCollection.doc(itemId).delete();
     } catch (e) {
       throw Exception('Failed to delete item: $e');
     }
   }
 
-  // Search items
   Future<List<Map<String, dynamic>>> searchItems(String query) async {
     try {
-      final snapshot = await _lostItemsCollection
-          .where('status', isEqualTo: 'lost')
+      final snapshot = await _itemsCollection
+          .orderBy('createdAt', descending: true)
           .get();
 
       final items = snapshot.docs.map((doc) {
@@ -139,14 +144,15 @@ class FirestoreService {
         return data;
       }).toList();
 
-      // Filter by search query
-      if (query.isEmpty) return items;
+      final q = query.trim().toLowerCase();
+      if (q.isEmpty) return items;
 
       return items.where((item) {
-        final title = (item['title'] as String).toLowerCase();
-        final description = (item['description'] as String).toLowerCase();
-        final searchQuery = query.toLowerCase();
-        return title.contains(searchQuery) || description.contains(searchQuery);
+        final title = (item['title'] ?? '').toString().toLowerCase();
+        final description = (item['description'] ?? '')
+            .toString()
+            .toLowerCase();
+        return title.contains(q) || description.contains(q);
       }).toList();
     } catch (e) {
       throw Exception('Failed to search items: $e');
