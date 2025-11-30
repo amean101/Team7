@@ -818,10 +818,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       final role = doc.data()?['role'];
       if (role == 'admin') {
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
-        );
+        Navigator.pushReplacementNamed(context, '/adminHome');
       } else {
         await FirebaseAuth.instance.signOut();
         setState(() => _msg = 'Not an admin account');
@@ -965,40 +962,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class AdminHomeScreen extends StatelessWidget {
-  const AdminHomeScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(title: const Text('Admin')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Admin dashboard',
-              style: TextStyle(fontSize: 20, color: _ink),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accent,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Sign out'),
-            ),
-          ],
         ),
       ),
     );

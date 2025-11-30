@@ -6,9 +6,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8E8E8),
+      backgroundColor: Color.fromARGB(255, 214, 214, 214),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE8E8E8),
+        backgroundColor: Color.fromARGB(255, 214, 214, 214),
         elevation: 0,
         title: const SizedBox.shrink(),
         actions: [
@@ -27,57 +27,22 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo Icon
-                  const Icon(
-                    Icons.explore_outlined,
-                    size: 100,
-                    color: Color(0xFF2C5F6F),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // App Title
-                  const Text(
-                    'TraceIt',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C5F6F),
-                      letterSpacing: 1,
-                    ),
-                  ),
-
-                  // Red underline
-                  Container(
-                    width: 220,
-                    height: 3,
-                    margin: const EdgeInsets.only(top: 4),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.red.shade400,
-                          width: 3,
+                  SizedBox(
+                    height: 300,
+                    width: double.infinity,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/traceit_logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // Subtitle
-                  const Text(
-                    'digital lost & found',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Color(0xFF5A5A5A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  // Description text
+                  const SizedBox(height: 20),
                   Text(
-                    'Upload found items and report lost items quickly and easily with TraceIt! Chat with event staff, navigate to the lost and found, and get your items back quicker than ever.',
+                    'Upload found items and report lost items quickly and easily with TraceIt. Chat with event staff, navigate to the lost and found, and get your items back quicker than ever.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
@@ -85,14 +50,10 @@ class HomeScreen extends StatelessWidget {
                       height: 1.6,
                     ),
                   ),
-
-                  const SizedBox(height: 70),
-
-                  // Buttons Row
+                  const SizedBox(height: 60),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Found Item Button
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
@@ -117,10 +78,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 16),
-
-                      // Lost Item Button
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
@@ -147,7 +105,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -173,7 +130,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _FooterIconButton(
-                  icon: Icons.explore_outlined,
+                  icon: Icons.navigation_outlined,
                   onPressed: () => Navigator.pushNamed(context, '/map'),
                 ),
                 _FooterIconButton(

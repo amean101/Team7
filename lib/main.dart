@@ -8,6 +8,8 @@ import 'pages/lost_item.dart';
 import 'pages/found_item.dart';
 import 'pages/map.dart';
 import 'pages/home.dart';
+import 'admin/admin_home.dart';
+import 'admin/admin_search.dart';
 
 const kPrimary = Color(0xFF3B82F6);
 const kSecondary = Color(0xFF10B981);
@@ -109,6 +111,8 @@ class TraceItApp extends StatelessWidget {
         '/foundItem': (_) => const FoundItemScreen(),
         '/map': (_) => const MapScreen(),
         '/chat': (_) => const ChatScreen(),
+        '/adminHome': (_) => const AdminHomeScreen(),
+        '/adminSearch': (_) => const AdminSearchScreen(),
       },
     );
   }

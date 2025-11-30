@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
-const _bg = Color.fromARGB(246, 220, 220, 221);
-const _logoHeight = 300.0;
-
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: const Color.fromARGB(255, 214, 214, 214),
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: const Color.fromARGB(255, 214, 214, 214),
         elevation: 0,
         title: const SizedBox.shrink(),
         actions: [
@@ -24,101 +21,91 @@ class AdminHomeScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: _logoHeight,
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/traceit_logo.png',
-                        fit: BoxFit.contain,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 300,
+                    width: double.infinity,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/traceit_logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        Text(
-                          'Admin side of TraceIt. Here, staff is able to review the database, search for items, and keep track of what has been returned or archived.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey.shade600,
-                            height: 1.6,
-                          ),
-                        ),
-                        const SizedBox(height: 60),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/adminAnalytics',
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.red.shade400,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 18,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  elevation: 3,
-                                ),
-                                child: const Text(
-                                  'Analytics',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/adminSearch');
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.red.shade400,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 18,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  elevation: 3,
-                                ),
-                                child: const Text(
-                                  'Item Search',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 40),
-                      ],
+                  const SizedBox(height: 20),
+                  Text(
+                    'Admin side of TraceIt. Here, staff is able to review the database, search for items, and keep track of what has been returned or archived.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade600,
+                      height: 1.6,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 60),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/adminAnalytics');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.red.shade400,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 3,
+                          ),
+                          child: const Text(
+                            'Analytics',
+                            style: TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/adminSearch');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.red.shade400,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 3,
+                          ),
+                          child: const Text(
+                            'Item Search',
+                            style: TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),
