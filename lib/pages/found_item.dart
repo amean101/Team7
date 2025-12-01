@@ -83,7 +83,7 @@ class _FoundItemScreenState extends State<FoundItemScreen> {
 
         await _firestoreService.updateItemStatus(
           itemId: item['id'],
-          status: 'claimed',
+          status: 'returned',
           claimedBy: currentUser.uid,
         );
 

@@ -493,9 +493,9 @@ class _LostItemScreenState extends State<LostItemScreen> {
               onTap: () => Navigator.pop(context, 'found'),
             ),
             ListTile(
-              title: const Text('Claimed'),
+              title: const Text('Returned'),
               leading: const Icon(Icons.inbox, color: Colors.blue),
-              onTap: () => Navigator.pop(context, 'claimed'),
+              onTap: () => Navigator.pop(context, 'returned'),
             ),
           ],
         ),

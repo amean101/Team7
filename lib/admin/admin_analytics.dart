@@ -10,16 +10,19 @@ class AdminAnalyticsScreen extends StatelessWidget {
   Future<Map<String, int>> _loadCounts() async {
     final col = FirebaseFirestore.instance.collection('items');
 
-    final lost = await col.where('status', isEqualTo: 'lost').get();
-    final found = await col.where('status', isEqualTo: 'found').get();
-    final returned = await col.where('status', isEqualTo: 'claimed').get();
-    final archived = await col.where('status', isEqualTo: 'archived').get();
+    final totalSnap = await col.get();
+
+    final lostSnap = await col.where('status', isEqualTo: 'lost').get();
+    final foundSnap = await col.where('status', isEqualTo: 'found').get();
+    final returnedSnap = await col.where('status', isEqualTo: 'returned').get();
+    final archivedSnap = await col.where('status', isEqualTo: 'archived').get();
 
     return {
-      'lost': lost.size,
-      'found': found.size,
-      'returned': returned.size,
-      'archived': archived.size,
+      'total': totalSnap.size,
+      'lost': lostSnap.size,
+      'found': foundSnap.size,
+      'returned': returnedSnap.size,
+      'archived': archivedSnap.size,
     };
   }
 
@@ -77,14 +80,14 @@ class AdminAnalyticsScreen extends StatelessWidget {
                             Expanded(
                               child: _StatCard(
                                 label: 'Lost Items',
-                                value: counts['lost']!,
+                                value: counts['lost'] ?? 0,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _StatCard(
-                                label: 'Found Items',
-                                value: counts['found']!,
+                                label: 'Total Items',
+                                value: counts['total'] ?? 0,
                               ),
                             ),
                           ],
@@ -95,14 +98,14 @@ class AdminAnalyticsScreen extends StatelessWidget {
                             Expanded(
                               child: _StatCard(
                                 label: 'Returned',
-                                value: counts['returned']!,
+                                value: counts['returned'] ?? 0,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _StatCard(
                                 label: 'Archived',
-                                value: counts['archived']!,
+                                value: counts['archived'] ?? 0,
                               ),
                             ),
                           ],
@@ -121,6 +124,27 @@ class AdminAnalyticsScreen extends StatelessWidget {
                             }
 
                             final items = snap2.data!;
+                            if (items.isEmpty) {
+                              return Container(
+                                height: 200,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'No items in the database yet.\nAdd lost items to see trends over time.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
                             return _HistoryChart(items: items);
                           },
                         ),
@@ -191,24 +215,24 @@ class _HistoryChart extends StatelessWidget {
 
   const _HistoryChart({required this.items});
 
-  Map<DateTime, Map<String, int>> _group() {
+  Map<DateTime, Map<String, int>> _groupByDateAndStatus() {
     final data = <DateTime, Map<String, int>>{};
 
     for (final item in items) {
       final ts = item['createdAt'];
       if (ts == null) continue;
 
-      final date = DateTime(
-        ts.toDate().year,
-        ts.toDate().month,
-        ts.toDate().day,
-      );
-      final status = item['status'] ?? '';
+      final dt = ts.toDate() as DateTime;
+      final date = DateTime(dt.year, dt.month, dt.day);
+      final status = (item['status'] ?? '').toString();
 
-      data.putIfAbsent(date, () => {'lost': 0, 'found': 0});
+      data.putIfAbsent(date, () => {'lost': 0, 'returned': 0});
 
-      if (status == 'lost') data[date]!['lost'] = data[date]!['lost']! + 1;
-      if (status == 'found') data[date]!['found'] = data[date]!['found']! + 1;
+      if (status == 'lost') {
+        data[date]!['lost'] = data[date]!['lost']! + 1;
+      } else if (status == 'returned') {
+        data[date]!['returned'] = data[date]!['returned']! + 1;
+      }
     }
 
     return data;
@@ -216,55 +240,215 @@ class _HistoryChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _group();
+    final grouped = _groupByDateAndStatus();
     final dates = grouped.keys.toList()..sort();
+
     final lostSpots = <FlSpot>[];
-    final foundSpots = <FlSpot>[];
+    final returnedSpots = <FlSpot>[];
+    final labels = <String>[];
 
     for (int i = 0; i < dates.length; i++) {
       final d = dates[i];
-      final lost = grouped[d]!['lost']!.toDouble();
-      final found = grouped[d]!['found']!.toDouble();
+      final counts = grouped[d]!;
+      final lost = counts['lost']!.toDouble();
+      final returned = counts['returned']!.toDouble();
+
       lostSpots.add(FlSpot(i.toDouble(), lost));
-      foundSpots.add(FlSpot(i.toDouble(), found));
+      returnedSpots.add(FlSpot(i.toDouble(), returned));
+      labels.add('${d.month}/${d.day}');
+    }
+
+    final hasData = lostSpots.isNotEmpty || returnedSpots.isNotEmpty;
+    if (!hasData) {
+      return Container(
+        height: 200,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Center(
+          child: Text(
+            'No chart data yet.\nItems will appear here as they are created.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+        ),
+      );
+    }
+
+    double maxY = 0;
+    for (final s in [...lostSpots, ...returnedSpots]) {
+      if (s.y > maxY) maxY = s.y;
+    }
+    if (maxY < 1) {
+      maxY = 1;
     }
 
     return Container(
       height: 260,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: LineChart(
-        LineChartData(
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: lostSpots,
-              isCurved: true,
-              color: Colors.blue,
-              barWidth: 3,
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.blue.withOpacity(0.15),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Items over time',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: const [
+              _LegendDot(color: Color(0xFF2563EB), label: 'Lost'),
+              SizedBox(width: 18),
+              _LegendDot(color: Color(0xFFDC2626), label: 'Returned'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Center(
+                    child: RotatedBox(
+                      quarterTurns: 3,
+                      child: Text(
+                        'Count',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: LineChart(
+                    LineChartData(
+                      minY: 0,
+                      maxY: maxY + 0.5,
+                      gridData: FlGridData(
+                        show: true,
+                        horizontalInterval: 1,
+                        drawVerticalLine: false,
+                      ),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: 1,
+                            reservedSize: 28,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index < 0 || index >= labels.length) {
+                                return const SizedBox.shrink();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  labels[index],
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: 1,
+                            reservedSize: 28,
+                            getTitlesWidget: (value, meta) {
+                              if (value % 1 != 0) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: lostSpots,
+                          isCurved: true,
+                          color: const Color(0xFF2563EB),
+                          barWidth: 3,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: const Color.fromARGB(40, 37, 99, 235),
+                          ),
+                        ),
+                        LineChartBarData(
+                          spots: returnedSpots,
+                          isCurved: true,
+                          color: const Color(0xFFDC2626),
+                          barWidth: 3,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: const Color.fromARGB(40, 220, 38, 38),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            LineChartBarData(
-              spots: foundSpots,
-              isCurved: true,
-              color: Colors.red,
-              barWidth: 3,
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.red.withOpacity(0.15),
-              ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              'Date',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+        ),
+      ],
     );
   }
 }
